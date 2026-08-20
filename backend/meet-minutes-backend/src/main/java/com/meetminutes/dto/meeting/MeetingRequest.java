@@ -1,7 +1,9 @@
 package com.meetminutes.dto.meeting;
 
+import com.meetminutes.entity.MeetingStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,8 +11,10 @@ import java.time.LocalTime;
 public class MeetingRequest {
 
     @NotBlank(message = "Title is required")
+    @Size(max = 150, message = "Title cannot exceed 150 characters")
     private String title;
 
+    @Size(max = 2000, message = "Description cannot exceed 2000 characters")
     private String description;
 
     @NotNull(message = "Meeting date is required")
@@ -23,9 +27,6 @@ public class MeetingRequest {
     private String location;
 
     private String meetingLink;
-
-    @NotBlank(message = "Status is required")
-    private String status;
 
     public MeetingRequest() {
     }
@@ -86,11 +87,4 @@ public class MeetingRequest {
         this.meetingLink = meetingLink;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 }

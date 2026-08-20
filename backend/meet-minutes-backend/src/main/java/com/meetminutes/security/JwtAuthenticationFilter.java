@@ -52,6 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String email = jwtService.extractEmail(token);
+        Long userId = jwtService.extractUserId(token);
 
         UserDetails userDetails =
                 userDetailsService.loadUserByUsername(email);

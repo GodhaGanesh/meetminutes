@@ -1,5 +1,7 @@
 package com.meetminutes.dto.meeting;
 
+import com.meetminutes.entity.MeetingStatus;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,7 +24,7 @@ public class MeetingResponse {
 
     private String meetingLink;
 
-    private String status;
+    private MeetingStatus status;
 
     private Long createdBy;
 
@@ -44,7 +46,7 @@ public class MeetingResponse {
             LocalTime endTime,
             String location,
             String meetingLink,
-            String status,
+            MeetingStatus status,
             Long createdBy,
             String createdByName,
             LocalDateTime createdAt,
@@ -129,11 +131,11 @@ public class MeetingResponse {
         this.meetingLink = meetingLink;
     }
 
-    public String getStatus() {
+    public MeetingStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(MeetingStatus status) {
         this.status = status;
     }
 

@@ -3,9 +3,15 @@ package com.meetminutes.service;
 import com.meetminutes.dto.meeting.MeetingRequest;
 import com.meetminutes.dto.meeting.MeetingResponse;
 import com.meetminutes.entity.Meeting;
+import com.meetminutes.entity.MeetingParticipant;
+import com.meetminutes.entity.MeetingStatus;
 import com.meetminutes.entity.User;
+import com.meetminutes.exception.BadRequestException;
+import com.meetminutes.exception.ForbiddenException;
+import com.meetminutes.exception.ResourceNotFoundException;
 import com.meetminutes.repository.MeetingRepository;
 import com.meetminutes.repository.UserRepository;
+import com.meetminutes.repository.MeetingParticipantRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -17,13 +23,16 @@ public class MeetingService {
 
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
+    private final MeetingParticipantRepository meetingParticipantRepository;
 
     public MeetingService(
             MeetingRepository meetingRepository,
-            UserRepository userRepository) {
-
+            UserRepository userRepository,
+            MeetingParticipantRepository meetingParticipantRepository
+    ) {
         this.meetingRepository = meetingRepository;
         this.userRepository = userRepository;
+        this.meetingParticipantRepository = meetingParticipantRepository;
     }
 
     private User getCurrentUser() {
@@ -38,7 +47,7 @@ public class MeetingService {
         return userRepository
                 .findByEmail(email)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new ResourceNotFoundException("User not found"));
     }
 
     public MeetingResponse createMeeting(MeetingRequest request) {
@@ -54,12 +63,27 @@ public class MeetingService {
         meeting.setEndTime(request.getEndTime());
         meeting.setLocation(request.getLocation());
         meeting.setMeetingLink(request.getMeetingLink());
-        meeting.setStatus(request.getStatus());
+        meeting.setStatus(MeetingStatus.SCHEDULED);
+
+        if (request.getStartTime() != null &&
+                request.getEndTime() != null &&
+                !request.getStartTime().isBefore(request.getEndTime())) {
+
+            throw new BadRequestException(
+                    "Start time must be before end time"
+            );
+        }
 
         meeting.setCreatedBy(currentUser);
 
         Meeting savedMeeting =
                 meetingRepository.save(meeting);
+        MeetingParticipant creatorParticipant = new MeetingParticipant();
+
+        creatorParticipant.setMeeting(savedMeeting);
+        creatorParticipant.setUser(savedMeeting.getCreatedBy());
+
+        meetingParticipantRepository.save(creatorParticipant);
 
         return convertToResponse(savedMeeting);
     }
@@ -92,12 +116,13 @@ public class MeetingService {
                 .toList();
     }
 
-    public MeetingResponse getMeetingById(Long id) {
+    public MeetingResponse getMeetingById(
+            Long meetingId,
+            Long requesterId
+    ) {
 
-        Meeting meeting = meetingRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Meeting not found"));
+        Meeting meeting =
+                getMeetingForUser(meetingId, requesterId);
 
         return convertToResponse(meeting);
     }
@@ -109,8 +134,7 @@ public class MeetingService {
         Meeting meeting = meetingRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "Meeting not found"));
+                        new ResourceNotFoundException("Meeting not found"));
 
         verifyOwnership(meeting);
 
@@ -121,7 +145,7 @@ public class MeetingService {
         meeting.setEndTime(request.getEndTime());
         meeting.setLocation(request.getLocation());
         meeting.setMeetingLink(request.getMeetingLink());
-        meeting.setStatus(request.getStatus());
+        meeting.setStatus(MeetingStatus.SCHEDULED);
 
         Meeting updatedMeeting =
                 meetingRepository.save(meeting);
@@ -134,8 +158,7 @@ public class MeetingService {
         Meeting meeting = meetingRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "Meeting not found"));
+                        new ResourceNotFoundException("Meeting not found"));
 
         verifyOwnership(meeting);
 
@@ -160,12 +183,51 @@ public class MeetingService {
         if (!meeting.getCreatedBy().getId()
                 .equals(currentUser.getId())) {
 
-            throw new RuntimeException(
+            throw new ForbiddenException(
                     "You are not allowed to modify this meeting"
             );
         }
     }
 
+    private Meeting getMeetingForUser(
+            Long meetingId,
+            Long userId
+    ) {
 
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Meeting not found"
+                        )
+                );
 
+        // Owner has access
+        if (meeting.getCreatedBy().getId().equals(userId)) {
+            return meeting;
+        }
+
+        // Participant has access
+        boolean isParticipant =
+                meetingParticipantRepository
+                        .findByMeetingIdAndUserId(
+                                meetingId,
+                                userId
+                        )
+                        .isPresent();
+
+        if (!isParticipant) {
+            throw new ForbiddenException(
+                    "You do not have access to this meeting"
+            );
+        }
+
+        return meeting;
+    }
+
+    public MeetingResponse getMeetingById(Long meetingId) {
+
+        User currentUser = getCurrentUser();
+
+        return getMeetingById(meetingId, currentUser.getId());
+    }
 }

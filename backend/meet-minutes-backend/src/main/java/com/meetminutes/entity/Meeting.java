@@ -29,8 +29,9 @@ public class Meeting {
 
     private String meetingLink;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private MeetingStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
@@ -119,11 +120,11 @@ public class Meeting {
         this.meetingLink = meetingLink;
     }
 
-    public String getStatus() {
+    public MeetingStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(MeetingStatus status) {
         this.status = status;
     }
 

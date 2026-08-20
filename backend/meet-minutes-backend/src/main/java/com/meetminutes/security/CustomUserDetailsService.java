@@ -31,11 +31,13 @@ public class CustomUserDetailsService
                         )
                 );
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPasswordHash())
-                .roles(user.getRole())
-                .disabled(!user.isActive())
-                .build();
+        return new CustomUserPrincipal(
+                user.getId(),
+                user.getEmail(),
+                user.getPasswordHash(),
+                org.springframework.security.core.authority.AuthorityUtils
+                        .createAuthorityList("ROLE_" + user.getRole()),
+                user.isActive()
+        );
     }
 }
