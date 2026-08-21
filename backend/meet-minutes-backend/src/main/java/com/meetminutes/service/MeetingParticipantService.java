@@ -1,9 +1,11 @@
 package com.meetminutes.service;
 
+import com.meetminutes.dto.participant.InvitationResponse;
 import com.meetminutes.dto.participant.ParticipantRequest;
 import com.meetminutes.dto.participant.ParticipantResponse;
 import com.meetminutes.entity.Meeting;
 import com.meetminutes.entity.MeetingParticipant;
+import com.meetminutes.entity.ParticipantStatus;
 import com.meetminutes.entity.User;
 import com.meetminutes.exception.ConflictException;
 import com.meetminutes.exception.ForbiddenException;
@@ -54,6 +56,12 @@ public class MeetingParticipantService {
                     new ResourceNotFoundException("User not found")
                 );
 
+        if (user.getId().equals(requesterId)) {
+            throw new ConflictException(
+                    "Meeting owner is already a participant"
+            );
+        }
+
         if (participantRepository
                 .findByMeetingIdAndUserId(meetingId, user.getId())
                 .isPresent()) {
@@ -67,6 +75,7 @@ public class MeetingParticipantService {
 
         participant.setMeeting(meeting);
         participant.setUser(user);
+        participant.setStatus(ParticipantStatus.PENDING);
 
         MeetingParticipant saved =
                 participantRepository.save(participant);
@@ -75,7 +84,8 @@ public class MeetingParticipantService {
                 saved.getId(),
                 user.getId(),
                 user.getFullName(),
-                user.getEmail()
+                user.getEmail(),
+                saved.getStatus()
         );
     }
 
@@ -94,7 +104,8 @@ public class MeetingParticipantService {
                                 participant.getId(),
                                 participant.getUser().getId(),
                                 participant.getUser().getFullName(),
-                                participant.getUser().getEmail()
+                                participant.getUser().getEmail(),
+                                participant.getStatus()
                         )
                 )
                 .toList();
@@ -127,5 +138,111 @@ public class MeetingParticipantService {
                         );
 
         participantRepository.delete(participant);
+    }
+    public ParticipantResponse acceptInvitation(
+            Long meetingId,
+            Long requesterId
+    ) {
+
+        MeetingParticipant participant =
+                participantRepository
+                        .findByMeetingIdAndUserId(meetingId, requesterId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Invitation not found"
+                                )
+                        );
+
+        if (participant.getStatus() != ParticipantStatus.PENDING) {
+            throw new ConflictException(
+                    "Invitation is not pending"
+            );
+        }
+
+        participant.setStatus(ParticipantStatus.ACCEPTED);
+
+        MeetingParticipant saved =
+                participantRepository.save(participant);
+
+        User user = saved.getUser();
+
+        return new ParticipantResponse(
+                saved.getId(),
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                saved.getStatus()
+        );
+    }
+
+    public ParticipantResponse declineInvitation (
+            Long meetingId,
+            Long requesterId
+    ){
+
+        MeetingParticipant participant =
+                participantRepository
+                        .findByMeetingIdAndUserId(meetingId, requesterId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Invitation not found"
+                                )
+                        );
+
+        if (participant.getStatus() != ParticipantStatus.PENDING) {
+            throw new ConflictException(
+                    "Invitation is not pending"
+            );
+        }
+
+        participant.setStatus(ParticipantStatus.DECLINED);
+
+        MeetingParticipant saved =
+                participantRepository.save(participant);
+
+        User user = saved.getUser();
+
+        return new ParticipantResponse(
+                saved.getId(),
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                saved.getStatus()
+        );
+    }
+
+    public List<InvitationResponse> getMyInvitations(
+            Long requesterId
+    ) {
+
+        return participantRepository
+                .findByUserIdAndStatus(
+                        requesterId,
+                        ParticipantStatus.PENDING
+                )
+                .stream()
+                .map(participant -> {
+
+                    Meeting meeting =
+                            participant.getMeeting();
+
+                    User owner =
+                            meeting.getCreatedBy();
+
+                    return new InvitationResponse(
+                            meeting.getId(),
+                            meeting.getTitle(),
+                            meeting.getDescription(),
+                            meeting.getMeetingDate(),
+                            meeting.getStartTime(),
+                            meeting.getEndTime(),
+                            meeting.getLocation(),
+                            meeting.getMeetingLink(),
+                            owner.getId(),
+                            owner.getFullName(),
+                            participant.getStatus()
+                    );
+                })
+                .toList();
     }
 }

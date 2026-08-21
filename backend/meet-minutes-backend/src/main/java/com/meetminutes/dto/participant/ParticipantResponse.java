@@ -1,11 +1,14 @@
 package com.meetminutes.dto.participant;
 
+import com.meetminutes.entity.ParticipantStatus;
+
 public class ParticipantResponse {
 
     private Long id;
     private Long userId;
     private String userName;
     private String userEmail;
+    private ParticipantStatus status;
 
     public ParticipantResponse() {
     }
@@ -14,12 +17,14 @@ public class ParticipantResponse {
             Long id,
             Long userId,
             String userName,
-            String userEmail
+            String userEmail,
+            ParticipantStatus status
     ) {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
+        this.status = status;
     }
 
     public Long getId() {
@@ -52,5 +57,13 @@ public class ParticipantResponse {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+
+    public ParticipantStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ParticipantStatus status) {
+        this.status = status;
     }
 }

@@ -2,10 +2,7 @@ package com.meetminutes.service;
 
 import com.meetminutes.dto.meeting.MeetingRequest;
 import com.meetminutes.dto.meeting.MeetingResponse;
-import com.meetminutes.entity.Meeting;
-import com.meetminutes.entity.MeetingParticipant;
-import com.meetminutes.entity.MeetingStatus;
-import com.meetminutes.entity.User;
+import com.meetminutes.entity.*;
 import com.meetminutes.exception.BadRequestException;
 import com.meetminutes.exception.ForbiddenException;
 import com.meetminutes.exception.ResourceNotFoundException;
@@ -82,6 +79,7 @@ public class MeetingService {
 
         creatorParticipant.setMeeting(savedMeeting);
         creatorParticipant.setUser(savedMeeting.getCreatedBy());
+        creatorParticipant.setStatus(ParticipantStatus.ACCEPTED);
 
         meetingParticipantRepository.save(creatorParticipant);
 
@@ -114,6 +112,16 @@ public class MeetingService {
                 .stream()
                 .map(this::convertToResponse)
                 .toList();
+    }
+
+    public MeetingResponse getMeetingById(Long meetingId) {
+
+        User currentUser = getCurrentUser();
+
+        return getMeetingById(
+                meetingId,
+                currentUser.getId()
+        );
     }
 
     public MeetingResponse getMeetingById(
@@ -201,33 +209,31 @@ public class MeetingService {
                         )
                 );
 
-        // Owner has access
+        // Owner always has access
         if (meeting.getCreatedBy().getId().equals(userId)) {
             return meeting;
         }
 
-        // Participant has access
-        boolean isParticipant =
+        // Find participant
+        MeetingParticipant participant =
                 meetingParticipantRepository
                         .findByMeetingIdAndUserId(
                                 meetingId,
                                 userId
                         )
-                        .isPresent();
+                        .orElseThrow(() ->
+                                new ForbiddenException(
+                                        "You do not have access to this meeting"
+                                )
+                        );
 
-        if (!isParticipant) {
+        // Only accepted participants have access
+        if (participant.getStatus() != ParticipantStatus.ACCEPTED) {
             throw new ForbiddenException(
                     "You do not have access to this meeting"
             );
         }
 
         return meeting;
-    }
-
-    public MeetingResponse getMeetingById(Long meetingId) {
-
-        User currentUser = getCurrentUser();
-
-        return getMeetingById(meetingId, currentUser.getId());
     }
 }

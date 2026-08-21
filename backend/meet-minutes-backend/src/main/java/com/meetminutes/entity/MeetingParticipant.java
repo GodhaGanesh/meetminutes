@@ -25,6 +25,10 @@ public class MeetingParticipant {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ParticipantStatus status;
+
     public MeetingParticipant() {
     }
 
@@ -46,5 +50,13 @@ public class MeetingParticipant {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public ParticipantStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ParticipantStatus status) {
+        this.status = status;
     }
 }

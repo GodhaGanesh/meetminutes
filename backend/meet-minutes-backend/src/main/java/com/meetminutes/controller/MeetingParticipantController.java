@@ -1,5 +1,6 @@
 package com.meetminutes.controller;
 
+import com.meetminutes.dto.participant.InvitationResponse;
 import com.meetminutes.dto.participant.ParticipantRequest;
 import com.meetminutes.dto.participant.ParticipantResponse;
 import com.meetminutes.security.CustomUserPrincipal;
@@ -83,5 +84,75 @@ public class MeetingParticipantController {
         );
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{meetingId}/participants/accept")
+    public ResponseEntity<ParticipantResponse> acceptInvitation(
+            @PathVariable Long meetingId
+    ) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        CustomUserPrincipal principal =
+                (CustomUserPrincipal) authentication.getPrincipal();
+
+        Long requesterId = principal.getUserId();
+
+        return ResponseEntity.ok(
+                participantService.acceptInvitation(
+                        meetingId,
+                        requesterId
+                )
+        );
+    }
+
+    @PostMapping("/{meetingId}/participants/decline")
+    public ResponseEntity<ParticipantResponse> declineInvitation(
+            @PathVariable Long meetingId
+    ) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        CustomUserPrincipal principal =
+                (CustomUserPrincipal) authentication.getPrincipal();
+
+        Long requesterId = principal.getUserId();
+
+        return ResponseEntity.ok(
+                participantService.declineInvitation(
+                        meetingId,
+                        requesterId
+                )
+        );
+    }
+
+    @GetMapping("/invitations")
+    public ResponseEntity<List<InvitationResponse>> getMyInvitations() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        CustomUserPrincipal principal =
+                (CustomUserPrincipal) authentication.getPrincipal();
+
+        System.out.println(
+                "Authenticated user ID: " + principal.getUserId()
+        );
+
+        Long requesterId = principal.getUserId();
+
+        return ResponseEntity.ok(
+                participantService.getMyInvitations(
+                        requesterId
+                )
+        );
     }
 }
