@@ -52,13 +52,19 @@ public class MeetingParticipantController {
 
     @GetMapping("/{meetingId}/participants")
     public ResponseEntity<List<ParticipantResponse>> getParticipants(
-            @PathVariable Long meetingId
-    ) {
+            @PathVariable Long meetingId) {
 
-        List<ParticipantResponse> participants =
-                participantService.getParticipants(meetingId);
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
-        return ResponseEntity.ok(participants);
+        CustomUserPrincipal principal =
+                (CustomUserPrincipal) authentication.getPrincipal();
+
+        Long requesterId = principal.getUserId();
+
+        return ResponseEntity.ok(
+                participantService.getParticipants(meetingId, requesterId)
+        );
     }
 
     @DeleteMapping("/{meetingId}/participants/{userId}")

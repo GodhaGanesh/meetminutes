@@ -89,25 +89,35 @@ public class MeetingParticipantService {
         );
     }
 
-    public List<ParticipantResponse> getParticipants(Long meetingId) {
+    public List<ParticipantResponse> getParticipants(Long meetingId, Long requesterId) {
 
-        meetingRepository.findById(meetingId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Meeting not found")
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Meeting not found"));
+
+        if (!meeting.getCreatedBy().getId().equals(requesterId)) {
+
+            MeetingParticipant requester = participantRepository
+                    .findByMeetingIdAndUserId(meetingId, requesterId)
+                    .orElseThrow(() ->
+                            new ForbiddenException("You do not have access to this meeting")
+                    );
+
+            if (requester.getStatus() != ParticipantStatus.ACCEPTED) {
+                throw new ForbiddenException(
+                        "You do not have access to this meeting"
                 );
+            }
+        }
 
-        return participantRepository
-                .findByMeetingId(meetingId)
+        return participantRepository.findByMeetingId(meetingId)
                 .stream()
-                .map(participant ->
-                        new ParticipantResponse(
-                                participant.getId(),
-                                participant.getUser().getId(),
-                                participant.getUser().getFullName(),
-                                participant.getUser().getEmail(),
-                                participant.getStatus()
-                        )
-                )
+                .map(participant -> new ParticipantResponse(
+                        participant.getId(),
+                        participant.getUser().getId(),
+                        participant.getUser().getFullName(),
+                        participant.getUser().getEmail(),
+                        participant.getStatus()
+                ))
                 .toList();
     }
 

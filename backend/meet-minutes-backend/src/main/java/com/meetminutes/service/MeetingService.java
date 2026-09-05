@@ -107,9 +107,27 @@ public class MeetingService {
 
     public List<MeetingResponse> getAllMeetings() {
 
+        User currentUser = getCurrentUser();
+
         return meetingRepository
                 .findAll()
                 .stream()
+                .filter(meeting -> {
+
+                    if (meeting.getCreatedBy().getId().equals(currentUser.getId())) {
+                        return true;
+                    }
+
+                    return meetingParticipantRepository
+                            .findByMeetingIdAndUserId(
+                                    meeting.getId(),
+                                    currentUser.getId()
+                            )
+                            .map(participant ->
+                                    participant.getStatus() == ParticipantStatus.ACCEPTED
+                            )
+                            .orElse(false);
+                })
                 .map(this::convertToResponse)
                 .toList();
     }
@@ -170,11 +188,15 @@ public class MeetingService {
 
         verifyOwnership(meeting);
 
+        List<MeetingParticipant> participants =
+                meetingParticipantRepository.findByMeetingId(id);
+
+        meetingParticipantRepository.deleteAll(participants);
+
         meetingRepository.delete(meeting);
     }
 
     public List<MeetingResponse> getMyMeetings() {
-
         User currentUser = getCurrentUser();
 
         return meetingRepository
@@ -209,12 +231,10 @@ public class MeetingService {
                         )
                 );
 
-        // Owner always has access
         if (meeting.getCreatedBy().getId().equals(userId)) {
             return meeting;
         }
 
-        // Find participant
         MeetingParticipant participant =
                 meetingParticipantRepository
                         .findByMeetingIdAndUserId(
@@ -227,7 +247,6 @@ public class MeetingService {
                                 )
                         );
 
-        // Only accepted participants have access
         if (participant.getStatus() != ParticipantStatus.ACCEPTED) {
             throw new ForbiddenException(
                     "You do not have access to this meeting"
