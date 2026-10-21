@@ -1,0 +1,61 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Java / Spring Boot
+target/
+
+# React / Node.js
+node_modules/
+dist/
+
+
+# Environment secrets
+.env
+**/.env
+
+# Java build output
+**/target/
+
+# Frontend dependencies/build
+**/node_modules/
+**/dist/
+
+# Python environments
+**/venv/
+**/.venv/
+
+# Large AI models
+*.bin
+*.gguf
+*.onnx
+
+# Test and uploaded recordings
+backend/meet-minutes-backend.zip
+backend/meet-minutes-backend/sample.mp3
+backend/meet-minutes-backend/sample.wav
+backend/meet-minutes-backend/uploads/meeting-recordings/
+backend/meet-minutes-backend/tools/whisper-old/*.wav
+backend/meet-minutes-backend/tools/whisper-old/*.txt
+backend/meet-minutes-backend/tools/sherpa-onnx/models/
+
+
+# AI models
+*.bin
+
+# IDE
+.idea/
+.vscode/
+
+# Whisper native binaries and models
+*.dll
+*.exe
+*.bin
+*.gguf

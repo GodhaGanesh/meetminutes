@@ -1,0 +1,19 @@
+$kind: http-request
+name: http://localhost:8080/api/auth/login
+description: ""
+url: http://localhost:8080/api/auth/login
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"testuser@gmail.com\",\r
+
+    \    \"password\": \"Test@123\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: ""
+order: 2000

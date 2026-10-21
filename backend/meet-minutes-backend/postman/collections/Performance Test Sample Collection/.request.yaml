@@ -1,0 +1,18 @@
+$kind: http-request
+name: ""
+url: http://localhost:8080/api/test/gemini
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"testuser@gmail.com\",\r
+
+    \    \"password\": \"Test@123\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0dXNlckBnbWFpbC5jb20iLCJ1c2VySWQiOjEwMDAwMTIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzkxOTA0ODcwLCJleHAiOjE3OTE5OTEyNzB9.8JfyTE75QgCe-C1h0HmVLxbhfqwIczGv3GZ3qwbgpdQIJ6tdPAu_nr187pLOYqGV_TB6v7HtDA2H5V0vJtAFfA
+order: 1000
